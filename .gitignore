@@ -1,0 +1,76 @@
+### Root-level ignores (monorepo)
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Backend module (aaw-backend - Gradle / Kotlin / Spring Boot)
+/aaw-backend/.gradle/
+/aaw-backend/build/
+/aaw-backend/out/
+/aaw-backend/.kotlin/
+/aaw-backend/.idea/
+/aaw-backend/*.iml
+/aaw-backend/.sts4-cache/
+
+### Frontend module (aaw-frontend - Node / Next.js)
+/aaw-frontend/.next/
+/aaw-frontend/node_modules/
+/aaw-frontend/.turbo/
+/aaw-frontend/.vercel/
+/aaw-frontend/dist/
+/aaw-frontend/.env.local
+/aaw-frontend/.env.*
+
+### Runner module (aaw-runner - Go)
+/aaw-runner/bin/
+/aaw-runner/build/
+/aaw-runner/.cache/
+/aaw-runner/coverage.out
+/aaw-runner/*.exe
+/aaw-runner/*.test
+/aaw-runner/*.out
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Kotlin ###
+.kotlin
+
+### Project-specific ###
+.claude/
+.cursor/
+.serena/
+common-docs/
+TEST_RESULTS.md
+CLAUDE.md

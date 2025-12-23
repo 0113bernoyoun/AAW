@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: aaw-postgres
+    environment:
+      POSTGRES_DB: aaw
+      POSTGRES_USER: aawuser
+      POSTGRES_PASSWORD: aawpass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aaw-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aawuser -d aaw"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aaw-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aaw-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  aaw-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
