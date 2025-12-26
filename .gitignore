@@ -71,6 +71,8 @@ out/
 .claude/
 .cursor/
 .serena/
+redis_data/
+postgres_data/
 common-docs/
 TEST_RESULTS.md
 CLAUDE.md

@@ -2,10 +2,16 @@ package models
 
 // Message types
 const (
-	TypeHelo         = "HELO"
-	TypeLog          = "LOG"
-	TypeStatusUpdate = "STATUS_UPDATE"
-	TypeExecute      = "EXECUTE"
+	TypeHelo           = "HELO"
+	TypeLog            = "LOG"
+	TypeStatusUpdate   = "STATUS_UPDATE"
+	TypeExecute        = "EXECUTE"
+	TypeRunnerStatus   = "RUNNER_STATUS"
+	TypeTaskCompleted  = "TASK_COMPLETED"
+	TypeCancelTask     = "CANCEL_TASK"
+	TypeKillTask       = "KILL_TASK"
+	TypeCancelAck      = "CANCEL_ACK"
+	TypeRunnerCapacity = "RUNNER_CAPACITY"
 )
 
 // HeloMessage represents the initial handshake message
@@ -40,6 +46,20 @@ type ExecuteMessage struct {
 	SessionMode     string `json:"sessionMode"`     // "NEW" or "PERSIST"
 }
 
+// RunnerStatusMessage represents the runner's current state
+type RunnerStatusMessage struct {
+	Type   string `json:"type"`
+	Status string `json:"status"` // "IDLE" or "BUSY"
+}
+
+// TaskCompletedMessage represents task completion notification
+type TaskCompletedMessage struct {
+	Type    string `json:"type"`
+	TaskID  int64  `json:"taskId"`
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"` // Optional error message
+}
+
 // Task status constants
 const (
 	StatusPending     = "PENDING"
@@ -48,4 +68,34 @@ const (
 	StatusRateLimited = "RATE_LIMITED"
 	StatusCompleted   = "COMPLETED"
 	StatusFailed      = "FAILED"
+	StatusCancelled   = "CANCELLED"
 )
+
+// CancelTaskMessage represents a request to gracefully cancel a task
+type CancelTaskMessage struct {
+	Type   string `json:"type"`
+	TaskID int64  `json:"taskId"`
+}
+
+// KillTaskMessage represents a request to forcefully kill a task
+type KillTaskMessage struct {
+	Type   string `json:"type"`
+	TaskID int64  `json:"taskId"`
+}
+
+// CancelAckMessage represents acknowledgment of cancel/kill request
+type CancelAckMessage struct {
+	Type    string `json:"type"`
+	TaskID  int64  `json:"taskId"`
+	Status  string `json:"status"`          // "CANCELLED" or "KILLED"
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
+// RunnerCapacityMessage represents the runner's capacity for concurrent tasks
+type RunnerCapacityMessage struct {
+	Type           string `json:"type"`
+	MaxParallel    int    `json:"maxParallel"`
+	RunningTasks   int    `json:"runningTasks"`
+	AvailableSlots int    `json:"availableSlots"`
+}

@@ -37,16 +37,56 @@ data class Task(
     val sessionMode: SessionMode = SessionMode.PERSIST,
 
     @Column(name = "created_at", nullable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+
+    // Phase 4.1: Queue management fields
+    @Column(nullable = false)
+    val priority: Int = 0,
+
+    @Column(name = "queued_at")
+    var queuedAt: LocalDateTime? = null,
+
+    @Column(name = "started_at")
+    var startedAt: LocalDateTime? = null,
+
+    @Column(name = "completed_at")
+    var completedAt: LocalDateTime? = null,
+
+    @Column(name = "error_summary", length = 1000)
+    var errorSummary: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "execution_mode", nullable = false, length = 20)
+    val executionMode: ExecutionMode = ExecutionMode.QUEUED,
+
+    @Column(name = "failure_reason", length = 50)
+    var failureReason: String? = null,
+
+    @Column(name = "retry_count", nullable = false)
+    var retryCount: Int = 0,
+
+    @Column(name = "cancelled_at")
+    var cancelledAt: LocalDateTime? = null
 )
 
 enum class TaskStatus {
     PENDING,
+    QUEUED,
     RUNNING,
     PAUSED,
     RATE_LIMITED,
     COMPLETED,
-    FAILED
+    FAILED,
+    PAUSED_BY_LIMIT,
+    INTERRUPTED,
+    CANCELLED,
+    CANCELLING,  // SIGTERM sent, waiting for graceful shutdown
+    KILLED       // Force killed with SIGKILL
+}
+
+enum class ExecutionMode {
+    QUEUED,
+    DIRECT
 }
 
 enum class SessionMode {

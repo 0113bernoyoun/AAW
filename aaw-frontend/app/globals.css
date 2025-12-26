@@ -1,3 +1,93 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Mission Control Dark Theme - Corrected HSL values for #0d1117 and #c9d1d9 */
+    --background: 216 28% 7%;
+    /* #0d1117 - mc-bg-primary */
+    --foreground: 212 12% 82%;
+    /* #c9d1d9 - mc-text-primary */
+    --card: 215 21% 11%;
+    /* #161b22 - mc-bg-secondary */
+    --card-foreground: 212 12% 82%;
+    /* #c9d1d9 */
+    --popover: 215 21% 11%;
+    /* #161b22 */
+    --popover-foreground: 212 12% 82%;
+    --primary: 212 100% 67%;
+    /* #58a6ff - mc-accent-blue */
+    --primary-foreground: 216 28% 7%;
+    --secondary: 213 12% 21%;
+    /* #30363d - mc-border */
+    --secondary-foreground: 212 12% 82%;
+    --muted: 213 12% 21%;
+    --muted-foreground: 213 10% 58%;
+    /* #8b949e - mc-text-muted */
+    --accent: 212 100% 67%;
+    /* #58a6ff */
+    --accent-foreground: 216 28% 7%;
+    --destructive: 3 93% 63%;
+    /* #f85149 - mc-accent-red */
+    --destructive-foreground: 212 12% 82%;
+    --border: 213 12% 21%;
+    /* #30363d */
+    --input: 213 12% 21%;
+    --ring: 212 100% 67%;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-urgent {
+    animation: pulse-urgent 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-urgent {
+
+    0%,
+    100% {
+      opacity: 1;
+      border-color: #f85149;
+    }
+
+    50% {
+      opacity: 0.5;
+      border-color: transparent;
+    }
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}

@@ -34,8 +34,7 @@ docker-compose ps
 ### 2. 백엔드 시작 (Spring Boot)
 
 ```bash
-cd aaw-backend
-./gradlew bootRun
+cd aaw-backend && ./gradlew bootRun
 ```
 
 **예상 출력:**

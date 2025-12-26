@@ -1,7 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { PlayCircle, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { PlayCircle, List, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import TaskExecutionModeSelector from './task-creation/TaskExecutionModeSelector';
+import TaskPriorityControl from './task-creation/TaskPriorityControl';
+import BulkTaskCreator from './task-creation/BulkTaskCreator';
+import UrgentModeDialog from './UrgentModeDialog';
+import { AlertTriangle } from 'lucide-react';
 
 interface TaskControlPanelProps {
   onTaskSubmit: (data: {
@@ -9,6 +20,8 @@ interface TaskControlPanelProps {
     scriptContent: string;
     skipPermissions: boolean;
     sessionMode: string;
+    priority?: number;
+    executionMode?: string;
   }) => void;
   isSystemReady: boolean;
   isStarting: boolean;
@@ -19,13 +32,16 @@ export default function TaskControlPanel({
   isSystemReady,
   isStarting,
 }: TaskControlPanelProps) {
-  // Version check - if you see this in console, new code is loaded
-  // console.log('[TaskControlPanel] Version 2.0 - Skip permissions conditional rendering enabled');
-
+  // Form State
   const [scriptContent, setScriptContent] = useState('');
+  const [executionMode, setExecutionMode] = useState<'QUEUED' | 'DIRECT'>('QUEUED');
+  const [priority, setPriority] = useState(50);
+  const [sessionMode, setSessionMode] = useState<'PERSIST' | 'NEW'>('PERSIST');
   const [skipPermissions, setSkipPermissions] = useState(false);
-  const [sessionMode, setSessionMode] = useState<'NEW' | 'PERSIST'>('PERSIST');
-  const [showDangerWarning, setShowDangerWarning] = useState(false);
+
+  // UI State
+  const [showUrgentDialog, setShowUrgentDialog] = useState(false);
+  const [showBulkCreator, setShowBulkCreator] = useState(false);
 
   const MATH_TEST_SCRIPT = 'Create a Python script that calculates factorial of 10 and prints the result';
 
@@ -35,250 +51,231 @@ export default function TaskControlPanel({
       return;
     }
 
-    if (skipPermissions && !showDangerWarning) {
-      // Show inline danger warning for confirmation
-      setShowDangerWarning(true);
-    } else if (!skipPermissions) {
-      // Submit directly if no danger mode
-      executeSubmit();
+    // Check for urgent priority confirmation
+    if (priority >= 90) {
+      setShowUrgentDialog(true);
+      return;
     }
+
+    executeSubmit();
   };
 
   const executeSubmit = () => {
     onTaskSubmit({
-      instruction: scriptContent.substring(0, 100), // First 100 chars as instruction
+      instruction: scriptContent.substring(0, 100),
       scriptContent,
       skipPermissions,
       sessionMode,
+      priority,
+      executionMode,
     });
-    setShowDangerWarning(false);
-  };
-
-  const handleDangerConfirm = () => {
-    executeSubmit();
-  };
-
-  const handleDangerCancel = () => {
-    setShowDangerWarning(false);
+    setShowUrgentDialog(false);
   };
 
   const loadMathTest = () => {
     setScriptContent(MATH_TEST_SCRIPT);
-    setSkipPermissions(true);
+    setExecutionMode('QUEUED');
+    setPriority(50);
     setSessionMode('NEW');
+    setSkipPermissions(true);
+  };
+
+  const handleReset = () => {
+    setScriptContent('');
+    setExecutionMode('QUEUED');
+    setPriority(50);
+    setSessionMode('PERSIST');
+    setSkipPermissions(false);
   };
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Dynamic Task Control Panel</h2>
-
-        {/* Script Content Textarea */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Script / Prompt
-          </label>
-          <textarea
-            value={scriptContent}
-            onChange={(e) => setScriptContent(e.target.value)}
-            placeholder="Enter your Claude Code script or prompt here..."
-            className="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Session Mode */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Session Mode
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="sessionMode"
-                  value="PERSIST"
-                  checked={sessionMode === 'PERSIST'}
-                  onChange={(e) => setSessionMode(e.target.value as 'PERSIST')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-sm text-gray-700">
-                  Persist (Use shared context)
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="sessionMode"
-                  value="NEW"
-                  checked={sessionMode === 'NEW'}
-                  onChange={(e) => setSessionMode(e.target.value as 'NEW')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-sm text-gray-700">
-                  New (Isolated clean context)
-                </span>
-              </label>
-            </div>
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Create Task</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkCreator(true)}
+              disabled={!isSystemReady}
+            >
+              <List className="w-4 h-4 mr-2" />
+              Bulk Create
+            </Button>
           </div>
+        </CardHeader>
 
-          {/* Skip Permissions Toggle */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Execution Mode
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={skipPermissions}
-                onChange={(e) => {
-                  console.log('[DEBUG] Skip Permissions changed:', e.target.checked);
-                  setSkipPermissions(e.target.checked);
-                  if (!e.target.checked) {
-                    console.log('[DEBUG] Hiding danger warning');
-                    setShowDangerWarning(false); // Hide warning when unchecked
-                  }
-                }}
-                className="w-5 h-5 text-red-600 rounded"
-              />
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  Skip Permissions (Danger Mode)
-                </span>
-              </div>
-            </label>
-            {skipPermissions && (
-              <p className="text-xs text-red-600 mt-1 ml-8">
-                Claude will execute commands without asking
-              </p> 
-            ) && (
-        <div className="overflow-hidden transition-all duration-300 ease-in-out max-h-96 mt-4">
-          <div className="border-2 border-red-500 rounded-lg bg-red-50 p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <ShieldAlert className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-lg font-bold text-red-900 mb-2">
-                  ⚠️ Danger Mode Warning
-                </h3>
-                <p className="text-sm text-red-800 mb-3">
-                  You are about to run Claude Code with <strong>--dangerously-skip-permissions</strong>.
+        <CardContent>
+          <Tabs defaultValue="script" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="script">Script</TabsTrigger>
+              <TabsTrigger value="execution">Execution</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            </TabsList>
+
+            {/* Script Tab */}
+            <TabsContent value="script" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="script-content">Script / Prompt</Label>
+                <Textarea
+                  id="script-content"
+                  placeholder="Enter your Claude Code script or prompt here..."
+                  value={scriptContent}
+                  onChange={(e) => setScriptContent(e.target.value)}
+                  rows={10}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Describe what you want Claude Code to do. Be specific for best results.
                 </p>
               </div>
-            </div>
+            </TabsContent>
 
-            <div className="bg-red-100 border-l-4 border-red-600 p-4 rounded mb-4">
-              <p className="text-sm text-red-900 font-semibold mb-2">
-                This will allow Claude to:
-              </p>
-              <ul className="text-sm text-red-800 space-y-1 list-disc list-inside ml-2">
-                <li>Execute commands without confirmation</li>
-                <li>Modify files without asking</li>
-                <li>Make system-level changes</li>
-                <li>Access sensitive data</li>
-              </ul>
-            </div>
+            {/* Execution Tab */}
+            <TabsContent value="execution" className="space-y-6">
+              {/* Execution Mode Selector */}
+              <TaskExecutionModeSelector
+                value={executionMode}
+                onChange={(val) => setExecutionMode(val)}
+              />
 
-            <p className="text-sm text-red-800 mb-4">
-              Only proceed if you fully understand the security implications and trust the script you're running.
-            </p>
+              {/* Priority Control */}
+              <TaskPriorityControl
+                value={priority}
+                onChange={setPriority}
+              />
+            </TabsContent>
 
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={handleDangerCancel}
-                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDangerConfirm}
-                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
-              >
-                I Understand - Proceed
-              </button>
-            </div>
-          </div>
-        </div>
-        )}
-          </div>
-        </div>
+            {/* Advanced Tab */}
+            <TabsContent value="advanced" className="space-y-6">
+              {/* Session Mode */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Session Mode</Label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg border hover:bg-accent transition-colors">
+                    <input
+                      type="radio"
+                      name="sessionMode"
+                      value="PERSIST"
+                      checked={sessionMode === 'PERSIST'}
+                      onChange={(e) => setSessionMode(e.target.value as 'PERSIST')}
+                      className="w-4 h-4"
+                    />
+                    <div>
+                      <div className="text-sm font-medium">Persist</div>
+                      <div className="text-xs text-muted-foreground">Use shared context across tasks</div>
+                    </div>
+                  </label>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
+                  <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg border hover:bg-accent transition-colors">
+                    <input
+                      type="radio"
+                      name="sessionMode"
+                      value="NEW"
+                      checked={sessionMode === 'NEW'}
+                      onChange={(e) => setSessionMode(e.target.value as 'NEW')}
+                      className="w-4 h-4"
+                    />
+                    <div>
+                      <div className="text-sm font-medium">New</div>
+                      <div className="text-xs text-muted-foreground">Isolated clean context for each task</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Skip Permissions */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Safety Settings</Label>
+                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border hover:bg-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={skipPermissions}
+                    onChange={(e) => setSkipPermissions(e.target.checked)}
+                    className="w-5 h-5 mt-0.5 rounded"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <span className="text-sm font-medium">Skip Permissions (Danger Mode)</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Claude will execute commands without asking for confirmation. Use with caution.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Danger Warning */}
+              {skipPermissions && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="w-4 h-4" />
+                  <AlertDescription className="text-xs">
+                    <strong>Warning:</strong> Skip Permissions allows Claude to execute commands, modify files,
+                    and make system-level changes without confirmation. Only use for trusted scripts.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+
+        <CardFooter className="flex gap-3">
+          <Button
+            onClick={loadMathTest}
+            variant="outline"
+            disabled={isStarting || !isSystemReady}
+          >
+            Load Test
+          </Button>
+
+          <Button
+            onClick={handleReset}
+            variant="outline"
+            disabled={isStarting}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Reset
+          </Button>
+
+          <Button
             onClick={handleSubmit}
             disabled={isStarting || !isSystemReady || !scriptContent.trim()}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            className="ml-auto"
           >
-            <PlayCircle size={20} />
+            <PlayCircle className="w-4 h-4 mr-2" />
             {isStarting ? 'Starting...' : 'Start Task'}
-          </button>
+          </Button>
+        </CardFooter>
 
-          <button
-            onClick={loadMathTest}
-            disabled={isStarting || !isSystemReady}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition-colors"
-          >
-            Load Math Test
-          </button>
-        </div>
-
-        {/* Inline Danger Warning Panel
-        {showDangerWarning && skipPermissions && (
-        <div className="overflow-hidden transition-all duration-300 ease-in-out max-h-96 mt-4">
-          <div className="border-2 border-red-500 rounded-lg bg-red-50 p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <ShieldAlert className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-lg font-bold text-red-900 mb-2">
-                  ⚠️ Danger Mode Warning
-                </h3>
-                <p className="text-sm text-red-800 mb-3">
-                  You are about to run Claude Code with <strong>--dangerously-skip-permissions</strong>.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-red-100 border-l-4 border-red-600 p-4 rounded mb-4">
-              <p className="text-sm text-red-900 font-semibold mb-2">
-                This will allow Claude to:
-              </p>
-              <ul className="text-sm text-red-800 space-y-1 list-disc list-inside ml-2">
-                <li>Execute commands without confirmation</li>
-                <li>Modify files without asking</li>
-                <li>Make system-level changes</li>
-                <li>Access sensitive data</li>
-              </ul>
-            </div>
-
-            <p className="text-sm text-red-800 mb-4">
-              Only proceed if you fully understand the security implications and trust the script you're running.
-            </p>
-
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={handleDangerCancel}
-                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDangerConfirm}
-                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
-              >
-                I Understand - Proceed
-              </button>
-            </div>
-          </div>
-        </div>
-        )} */}
-
+        {/* System Status */}
         {!isSystemReady && (
-          <p className="text-sm text-orange-600 mt-4">
-            ⚠️ System not ready - Runner must be connected to start tasks
-          </p>
+          <div className="px-6 pb-6">
+            <Alert>
+              <AlertTriangle className="w-4 h-4" />
+              <AlertDescription className="text-xs">
+                System not ready - Runner must be connected to start tasks
+              </AlertDescription>
+            </Alert>
+          </div>
         )}
-      </div>
+      </Card>
+
+      {/* Urgent Mode Dialog */}
+      <UrgentModeDialog
+        open={showUrgentDialog}
+        onOpenChange={setShowUrgentDialog}
+        onConfirm={executeSubmit}
+        priority={priority}
+        instruction={scriptContent}
+      />
+
+      {/* Bulk Task Creator */}
+      <BulkTaskCreator
+        open={showBulkCreator}
+        onOpenChange={setShowBulkCreator}
+      />
     </>
   );
 }
