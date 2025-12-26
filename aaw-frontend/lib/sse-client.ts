@@ -16,6 +16,8 @@ export interface SSECallbacks {
   onDispatcherPaused?: () => void;
   onDispatcherResumed?: () => void;
   onTaskRunning?: (taskId: number) => void;
+  onTaskDeleted?: (taskId: number, reason: string) => void;
+  onTaskArchived?: (taskId: number) => void;
   onError?: (error: Event) => void;
 }
 
@@ -112,6 +114,21 @@ export function connectToLogStream(
           }
           if (data.line) {
             callbacks.onLog(data);
+          }
+          break;
+        case 'TASK_DELETED':
+          // Manual deletion - show toast notification
+          if (callbacks.onTaskDeleted && data.taskId) {
+            const reason = (data as any).metadata?.reason || 'MANUAL_OVERRIDE';
+            callbacks.onTaskDeleted(data.taskId, reason);
+            console.log(`[SSE] Task ${data.taskId} deleted (reason: ${reason})`);
+          }
+          break;
+        case 'TASK_ARCHIVED':
+          // Retention cleanup - silent removal (no toast)
+          if (callbacks.onTaskArchived && data.taskId) {
+            callbacks.onTaskArchived(data.taskId);
+            console.log(`[SSE] Task ${data.taskId} archived by retention policy`);
           }
           break;
       }

@@ -336,6 +336,73 @@ class TaskController(
             failedCount = cleanedTasks.count { it.failureReason != null }
         ))
     }
+
+    /**
+     * Manual deletion endpoint - permanently removes task with hard delete.
+     * Bypasses 24-hour retention rule.
+     * Terminates running tasks before deletion if Runner available.
+     *
+     * @param id Task ID to delete
+     * @return ResponseEntity with deletion status
+     */
+    @DeleteMapping("/{id}")
+    fun deleteTask(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+        val task = taskRepository.findById(id).orElse(null)
+            ?: return ResponseEntity.notFound().build()
+
+        logger.info("Manual deletion requested for task [{}] (status: {})", task.id, task.status)
+
+        // If task is running or interrupted, attempt termination
+        if (task.status in listOf(TaskStatus.RUNNING, TaskStatus.INTERRUPTED)) {
+            logger.info("Task [{}] is active, attempting termination", task.id)
+
+            try {
+                taskService.sendCancelToRunner(task.id, force = false)
+                // Wait briefly for termination acknowledgment
+                Thread.sleep(2000)
+                logger.info("Termination signal sent for task [{}]", task.id)
+            } catch (e: Exception) {
+                logger.warn("Failed to terminate task [{}] gracefully: {}", task.id, e.message)
+                // Continue with deletion - Runner will clean up on next sync
+            }
+        }
+
+        // Hard delete from database
+        try {
+            taskRepository.delete(task)
+            logger.info("Task [{}] permanently deleted", task.id)
+
+            // Broadcast deletion event (triggers toast notification)
+            broadcastTaskDeletion(task.id)
+
+            return ResponseEntity.ok(mapOf(
+                "status" to "deleted",
+                "taskId" to task.id,
+                "reason" to "manual"
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to delete task [{}]", task.id, e)
+            return ResponseEntity.status(500).body(mapOf(
+                "error" to "Deletion failed",
+                "message" to (e.message ?: "Unknown error")
+            ))
+        }
+    }
+
+    /**
+     * Broadcasts TASK_DELETED SSE event to all connected frontend clients.
+     * Frontend removes task from UI and shows toast notification.
+     */
+    private fun broadcastTaskDeletion(taskId: Long) {
+        val event = com.berno.aaw.dto.LogChunkDTO(
+            type = "TASK_DELETED",
+            taskId = taskId,
+            line = null,
+            status = null,
+            isError = false
+        )
+        taskService.broadcastLog(event)
+    }
 }
 
 data class CreateDynamicTaskRequest(

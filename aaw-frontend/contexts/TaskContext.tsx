@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Task, TaskEvent, TaskStatus, RecoveryAttempt, SystemState } from '@/types/task';
 import { createReconnectingSSE, closeGlobalSSE, ReconnectingSSEManager, SSECallbacks } from '@/lib/sse-client';
 import { SSE_CONFIG } from '@/config/sse';
+import { toast } from 'sonner';
 
 // Interface for historical log entries from the API
 export interface LogEntry {
@@ -388,6 +389,35 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       setRunnerStatus('BUSY');
       setSseEvents(prev => [...prev, {
         type: 'TASK_RUNNING',
+        taskId,
+      }]);
+    },
+    onTaskDeleted: (taskId: number, reason: string) => {
+      console.log(`[TaskContext] Task ${taskId} deleted (reason: ${reason})`);
+
+      // Remove task from UI
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+
+      // Show toast notification for manual deletion
+      toast.info(`Task ${taskId} manually deleted`, {
+        duration: 3000,
+      });
+
+      // Add deletion event
+      setSseEvents(prev => [...prev, {
+        type: 'TASK_DELETED' as any,
+        taskId,
+      }]);
+    },
+    onTaskArchived: (taskId: number) => {
+      console.log(`[TaskContext] Task ${taskId} archived by retention policy`);
+
+      // Remove task from UI silently (no toast)
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+
+      // Add archival event
+      setSseEvents(prev => [...prev, {
+        type: 'TASK_ARCHIVED' as any,
         taskId,
       }]);
     },

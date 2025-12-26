@@ -7,11 +7,13 @@ Real-time Log Streaming & Rate-Limit Detection Proof of Concept
 
 ## ✅ Implementation Status
 
-**Phase 1-3 Complete:**
+**Phase 1-4.7 Complete:**
 - ✅ Infrastructure (Docker, Postgres, Redis)
-- ✅ Go Runner (WebSocket client, Task executor, Pattern matcher)
-- ✅ Spring Boot Backend (WebSocket handler, SSE broadcasting, JPA persistence)
-- ✅ Next.js 15 Frontend (Live terminal, Status badges, Real-time updates)
+- ✅ Go Runner (WebSocket client, Task executor, Pattern matcher, Process verification)
+- ✅ Spring Boot Backend (WebSocket handler, SSE broadcasting, JPA persistence, Task watchdog)
+- ✅ Next.js 15 Frontend (Live terminal, Status badges, Real-time updates, Checkbox bulk delete)
+- ✅ Multi-Tab SSE Support (Independent per-tab connections with full event streams)
+- ✅ Guaranteed Task Termination (30s watchdog, force-kill with DB update, process verification)
 
 ## 🚀 Quick Start
 
@@ -163,21 +165,27 @@ aaw/
 - ✅ Status update messages
 - ✅ Dynamic script execution with inline content
 - ✅ Command injection prevention using args array
+- ✅ Enhanced process verification with timeout and polling
+- ✅ Auto-escalation to SIGKILL if SIGTERM fails (10s timeout)
+- ✅ CANCEL_ACK protocol with success/failure reporting
 
 ### Backend (Spring Boot)
 - ✅ WebSocket endpoint (/ws/logs)
 - ✅ SSE endpoint (/api/logs/stream)
-- ✅ REST API (/api/tasks/start-dummy, /api/tasks/{id}, /api/tasks/create-dynamic)
-- ✅ Task status management (6 states)
+- ✅ REST API (/api/tasks/*, /api/runner/*)
+- ✅ Task status management (9 states: QUEUED, RUNNING, CANCELLING, CANCELLED, KILLED, COMPLETED, FAILED, INTERRUPTED, PAUSED)
 - ✅ JPA persistence (Task, ExecutionLog)
 - ✅ Reactive broadcasting with Reactor Sinks
 - ✅ Single-runner session management (prevents duplicate execution)
 - ✅ Session cleanup on new runner registration
+- ✅ TaskCancellationWatchdog (30s timeout for stuck CANCELLING tasks)
+- ✅ Enhanced force-kill endpoint with immediate DB update
+- ✅ Bulk cleanup endpoint with task ID filtering
 
 ### Frontend (Next.js)
 - ✅ xterm.js live terminal
-- ✅ SSE client for real-time updates
-- ✅ Status badge with color coding
+- ✅ SSE client for real-time updates (multi-tab support confirmed)
+- ✅ Status badge with color coding (includes CANCELLING, KILLED)
 - ✅ Task trigger button
 - ✅ Connection status indicator
 - ✅ Dynamic Task Control Panel with script/prompt input
@@ -185,6 +193,8 @@ aaw/
 - ✅ Skip Permissions toggle with inline warning panel
 - ✅ Expandable danger mode warning with smooth CSS transition
 - ✅ Conditional warning display (only shows when checkbox checked)
+- ✅ Checkbox-based bulk deletion (select multiple tasks to delete)
+- ✅ Visual feedback for task termination states (CANCELLING → KILLED)
 
 ---
 
@@ -361,13 +371,16 @@ npm run dev
 
 ---
 
-## 📝 Next Steps (Phase 4+)
+## 📝 Next Steps (Phase 5+)
 
-- [ ] Integration with Claude Code CLI
+- [x] Integration with Claude Code CLI (Phase 3.8)
+- [x] Task queue management with Redis (Phase 4.2)
+- [x] Multi-tab SSE support (Phase 4.7 - confirmed working)
+- [x] Checkbox bulk deletion (Phase 4.7)
+- [x] Guaranteed task termination (Phase 4.7 - watchdog + process verification)
 - [ ] Git Diff extraction and approval UI
 - [ ] Jira API integration
 - [ ] Rate limit recovery scheduler (1/5 min polling)
-- [ ] Task queue management with Redis
 - [ ] Multi-runner support
 - [ ] Guardrail workflow (branch creation, approval gates)
 
