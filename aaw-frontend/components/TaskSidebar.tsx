@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ListTodo, RefreshCw, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TASK_CONFIG } from '@/config/tasks';
+import { buildApiUrl } from '@/lib/api';
 
 export default function TaskSidebar() {
   const { tasks, selectedTaskId, selectTask, refreshTasks } = useTaskContext();
@@ -105,7 +106,7 @@ export default function TaskSidebar() {
     setIsBulkClearing(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/tasks/bulk-cleanup', {
+      const response = await fetch(buildApiUrl('/api/tasks/bulk-cleanup'), {
         method: 'POST',
       });
 
@@ -158,7 +159,7 @@ export default function TaskSidebar() {
     setIsBulkClearing(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/tasks/bulk-cleanup', {
+      const response = await fetch(buildApiUrl('/api/tasks/bulk-cleanup'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskIds }),

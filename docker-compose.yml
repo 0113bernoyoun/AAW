@@ -5,29 +5,30 @@ services:
     image: postgres:15-alpine
     container_name: aaw-postgres
     environment:
-      POSTGRES_DB: aaw
-      POSTGRES_USER: aawuser
-      POSTGRES_PASSWORD: aawpass
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: ${DB_NAME:-aaw}
+      POSTGRES_USER: ${DB_USER:-aawuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aawpass}
     ports:
-      - "5433:5432"
+      - "${DB_PORT:-5433}:5432"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - aaw-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aawuser -d aaw"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aawuser} -d ${DB_NAME:-aaw}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
     container_name: aaw-redis
+    command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - ./redis_data:/data
+      - redis_data:/data
     networks:
       - aaw-network
     healthcheck:
@@ -35,6 +36,65 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./aaw-backend
+      dockerfile: Dockerfile
+    container_name: aaw-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-aaw}
+      DB_USER: ${DB_USER:-aawuser}
+      DB_PASSWORD: ${DB_PASSWORD:-aawpass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-DEBUG}
+      SHOW_SQL: ${SHOW_SQL:-false}
+    ports:
+      - "8080:8080"
+    networks:
+      - aaw-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./aaw-frontend
+      dockerfile: Dockerfile
+    container_name: aaw-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      API_URL: http://backend:8080
+    ports:
+      - "3000:3000"
+    networks:
+      - aaw-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   aaw-network:

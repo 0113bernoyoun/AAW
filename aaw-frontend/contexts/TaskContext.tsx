@@ -5,6 +5,7 @@ import { Task, TaskEvent, TaskStatus, RecoveryAttempt, SystemState } from '@/typ
 import { createReconnectingSSE, closeGlobalSSE, ReconnectingSSEManager, SSECallbacks } from '@/lib/sse-client';
 import { SSE_CONFIG } from '@/config/sse';
 import { toast } from 'sonner';
+import { buildApiUrl } from '@/lib/api';
 
 // Interface for historical log entries from the API
 export interface LogEntry {
@@ -95,7 +96,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Fetch all tasks from backend
   const refreshTasks = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/tasks/list');
+      const response = await fetch(buildApiUrl('/api/tasks/list'));
       if (response.ok) {
         const taskList = await response.json();
         // Preserve recovery history when refreshing
@@ -117,7 +118,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Cancel a task (legacy - queued tasks)
   const cancelTask = useCallback(async (taskId: number) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/tasks/${taskId}/cancel`, {
+      const response = await fetch(buildApiUrl(`/api/tasks/${taskId}/cancel`), {
         method: 'POST',
       });
       if (response.ok) {
@@ -132,7 +133,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const cancelRunningTask = useCallback(async (taskId: number) => {
     try {
       console.log('[TaskContext] Cancelling running task:', taskId);
-      const response = await fetch(`http://localhost:8080/api/tasks/${taskId}/cancel`, {
+      const response = await fetch(buildApiUrl(`/api/tasks/${taskId}/cancel`), {
         method: 'POST',
       });
 
@@ -151,7 +152,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const forceKillTask = useCallback(async (taskId: number) => {
     try {
       console.log('[TaskContext] Force killing task:', taskId);
-      const response = await fetch(`http://localhost:8080/api/tasks/${taskId}/force-kill`, {
+      const response = await fetch(buildApiUrl(`/api/tasks/${taskId}/force-kill`), {
         method: 'POST',
       });
 
@@ -169,7 +170,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Retry an interrupted task
   const retryTask = useCallback(async (taskId: number) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/tasks/${taskId}/retry`, {
+      const response = await fetch(buildApiUrl(`/api/tasks/${taskId}/retry`), {
         method: 'POST',
       });
       if (response.ok) {
@@ -190,7 +191,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Skip an interrupted task
   const skipTask = useCallback(async (taskId: number) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/tasks/${taskId}/skip`, {
+      const response = await fetch(buildApiUrl(`/api/tasks/${taskId}/skip`), {
         method: 'POST',
       });
       if (response.ok) {
@@ -211,7 +212,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Restart runner session
   const restartRunner = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/runner/restart', {
+      const response = await fetch(buildApiUrl('/api/runner/restart'), {
         method: 'POST',
       });
       if (response.ok) {
@@ -252,7 +253,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     priority?: number;
     executionMode?: string;
   }): Promise<Task> => {
-    const response = await fetch('http://localhost:8080/api/tasks/create-with-priority', {
+    const response = await fetch(buildApiUrl('/api/tasks/create-with-priority'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -284,7 +285,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Fetch historical logs for a specific task
   const fetchTaskLogs = useCallback(async (taskId: number): Promise<LogEntry[]> => {
     try {
-      const response = await fetch(`http://localhost:8080/api/tasks/${taskId}/logs`);
+      const response = await fetch(buildApiUrl(`/api/tasks/${taskId}/logs`));
       if (response.ok) {
         const logs = await response.json();
         console.log(`[TaskContext] Fetched ${logs.length} logs for task ${taskId}`);
@@ -304,7 +305,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
    */
   const fetchSystemState = useCallback(async (): Promise<SystemState | null> => {
     try {
-      const response = await fetch('http://localhost:8080/api/runner/status');
+      const response = await fetch(buildApiUrl('/api/runner/status'));
       if (response.ok) {
         const state: SystemState = await response.json();
         console.log('[TaskContext] Fetched system state:', state);

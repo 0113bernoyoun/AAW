@@ -4,7 +4,10 @@
 
 export const SSE_CONFIG = {
   // Base URL for the SSE log stream endpoint
-  BASE_URL: 'http://localhost:8080/api/logs/stream',
+  // Uses environment variable for Docker networking support
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/logs/stream`
+    : 'http://localhost:8080/api/logs/stream',
 
   // Set to true to reconnect SSE on task selection change
   // This enables server-side filtering but causes brief reconnect gaps

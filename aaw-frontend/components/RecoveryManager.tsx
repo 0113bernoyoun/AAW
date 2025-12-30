@@ -14,6 +14,7 @@ export default function RecoveryManager() {
   const { tasks, retryTask, skipTask, restartRunner } = useTaskContext();
   const [interruptedTask, setInterruptedTask] = useState<Task | null>(null);
   const [autoRetryCountdown, setAutoRetryCountdown] = useState<number | null>(null);
+  const [dismissedTaskIds, setDismissedTaskIds] = useState<Set<number>>(new Set());
   const autoRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -87,8 +88,10 @@ export default function RecoveryManager() {
   }, [clearAutoRetryTimers, retryTask]);
 
   useEffect(() => {
-    // Find the first INTERRUPTED task
-    const interrupted = tasks.find(task => task.status === 'INTERRUPTED');
+    // Find the first INTERRUPTED task that hasn't been dismissed
+    const interrupted = tasks.find(
+      task => task.status === 'INTERRUPTED' && !dismissedTaskIds.has(task.id)
+    );
 
     if (interrupted) {
       if (!interruptedTask || interruptedTask.id !== interrupted.id) {
@@ -102,7 +105,38 @@ export default function RecoveryManager() {
       setInterruptedTask(null);
       clearAutoRetryTimers();
     }
-  }, [tasks, interruptedTask, scheduleAutoRetry, clearAutoRetryTimers]);
+
+    // Cleanup: Remove dismissed IDs for tasks that are no longer INTERRUPTED
+    // Cleanup: Remove dismissed IDs ONLY if the task is found and no longer INTERRUPTED
+    // This is conservative: if a task is missing from the list (e.g. loading), we keep it dismissed
+    setDismissedTaskIds(prev => {
+      const next = new Set(prev);
+      let changed = false;
+
+      prev.forEach(dismissedId => {
+        const task = tasks.find(t => t.id === dismissedId);
+        // Only remove if we explicitly see the task and it's resolved (not INTERRUPTED)
+        if (task && task.status !== 'INTERRUPTED') {
+          console.log(`[RecoveryManager] Removing task #${dismissedId} from dismissed list (Status: ${task.status})`);
+          next.delete(dismissedId);
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks, interruptedTask, dismissedTaskIds, scheduleAutoRetry, clearAutoRetryTimers]);
+
+  // Handle manual close by user (Close button, ESC key, overlay click)
+  const handleManualClose = useCallback(() => {
+    if (interruptedTask) {
+      console.log('[RecoveryManager] User manually closed dialog for task:', interruptedTask.id);
+      // Add to dismissed list to prevent re-opening
+      setDismissedTaskIds(prev => new Set(prev).add(interruptedTask.id));
+      clearAutoRetryTimers();
+      setInterruptedTask(null);
+    }
+  }, [interruptedTask, clearAutoRetryTimers]);
 
   const handleRetryCurrent = async () => {
     if (!interruptedTask) return;
@@ -192,8 +226,7 @@ export default function RecoveryManager() {
       open={true}
       onOpenChange={(open) => {
         if (!open) {
-          clearAutoRetryTimers();
-          setInterruptedTask(null);
+          handleManualClose();
         }
       }}
       onRetryCurrent={handleRetryCurrent}
