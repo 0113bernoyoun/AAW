@@ -18,7 +18,15 @@ const ResizablePanelGroup = ({
   />
 )
 
-const ResizablePanel = Panel
+const ResizablePanel = ({
+  className,
+  ...props
+}: React.ComponentProps<typeof Panel>) => (
+  <Panel
+    className={cn("overflow-hidden", className)}
+    {...props}
+  />
+)
 
 const ResizableHandle = ({
   withHandle,

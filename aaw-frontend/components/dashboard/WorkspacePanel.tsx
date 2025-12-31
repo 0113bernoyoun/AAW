@@ -8,12 +8,15 @@ import TaskRecoveryModal from '@/components/TaskRecoveryModal';
 import InlineWarning from '@/components/dashboard/InlineWarning';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { Terminal } from '@xterm/xterm';
-import { AlertCircle } from 'lucide-react';
+import { List, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import BulkTaskCreator from '@/components/task-creation/BulkTaskCreator';
 
 export default function WorkspacePanel() {
   const { tasks, selectedTaskId, createTask, isSystemReady, cancelTask, refreshTasks } = useTaskContext();
   const [isStarting, setIsStarting] = useState(false);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [showBulkCreator, setShowBulkCreator] = useState(false);
   const terminalRef = useRef<Terminal | null>(null);
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
@@ -76,7 +79,7 @@ export default function WorkspacePanel() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden">
+    <div className="h-full flex flex-col bg-zinc-950 overflow-hidden">
       {selectedTask ? (
         <>
           <TaskMetadataHeader task={selectedTask} />
@@ -93,8 +96,9 @@ export default function WorkspacePanel() {
             </div>
           )}
 
+          {/* Terminal Area - flex-grow for selected task view */}
           <div className="flex-1 overflow-hidden p-4">
-            <div className="bg-[#1e1e1e] rounded-lg p-4 h-full">
+            <div className="bg-zinc-900 rounded-lg p-4 h-full border border-zinc-800">
               <LiveTerminal onReady={handleTerminalReady} taskId={selectedTaskId} />
             </div>
           </div>
@@ -110,49 +114,54 @@ export default function WorkspacePanel() {
           />
         </>
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="border-b bg-card p-4">
-            <h2 className="text-xl font-semibold">Create New Task</h2>
-            <p className="text-sm text-muted-foreground">
-              Configure and submit a new AI task
-            </p>
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="border-b border-zinc-800 bg-zinc-950 p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-zinc-100">Create New Task</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkCreator(true)}
+                disabled={!isSystemReady}
+                className="bg-zinc-900 border-zinc-800 text-zinc-100 hover:bg-zinc-800"
+              >
+                <List className="w-4 h-4 mr-2" />
+                Bulk Create
+              </Button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-4">
-            <div className="max-w-4xl mx-auto space-y-6">
+          {/* Editor Area - flex-grow (top) */}
+          <div className="flex-1 overflow-auto p-6">
+            <div className="max-w-3xl space-y-6">
+              {/* Task Control Panel */}
               <TaskControlPanel
                 onTaskSubmit={handleTaskSubmit}
                 isSystemReady={isSystemReady}
                 isStarting={isStarting}
               />
+            </div>
+          </div>
 
-              <div className="bg-card border rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Live Terminal</h3>
-                <div className="bg-[#1e1e1e] rounded-lg p-4 h-[400px]">
-                  <LiveTerminal onReady={handleTerminalReady} taskId={null} />
-                </div>
+          {/* Terminal Area - fixed height (bottom) */}
+          <div className="h-[200px] border-t border-zinc-800 bg-zinc-950 flex-shrink-0">
+            <div className="p-4 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-zinc-100">Live Terminal</h3>
+                <Star className="w-4 h-4 text-zinc-500 hover:text-amber-500 cursor-pointer transition-colors" />
               </div>
-
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                      How Tasks Work
-                    </h3>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-blue-800 dark:text-blue-200">
-                      <li>Tasks are queued and executed based on priority</li>
-                      <li>Higher priority (90+) tasks show urgent warnings</li>
-                      <li>PERSIST mode shares context between tasks</li>
-                      <li>NEW mode provides isolated clean context</li>
-                      <li>Skip permissions enables danger mode (use carefully)</li>
-                      <li>View all tasks in the sidebar on the left</li>
-                    </ul>
-                  </div>
-                </div>
+              <div className="bg-zinc-900 rounded-lg p-3 flex-1 border border-zinc-800">
+                <LiveTerminal onReady={handleTerminalReady} taskId={null} />
               </div>
             </div>
           </div>
+
+          {/* Bulk Task Creator Modal */}
+          <BulkTaskCreator
+            open={showBulkCreator}
+            onOpenChange={setShowBulkCreator}
+          />
         </div>
       )}
     </div>

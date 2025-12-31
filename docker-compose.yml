@@ -72,7 +72,7 @@ services:
       retries: 3
       start_period: 60s
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:host-gateway"  # Enable host-side runner connection (Linux compatibility)
 
   frontend:
     build:

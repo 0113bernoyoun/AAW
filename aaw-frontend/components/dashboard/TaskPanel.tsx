@@ -6,10 +6,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskListItem from '@/components/TaskListItem';
-import { ListTodo, RefreshCw, Trash2, Plus } from 'lucide-react';
+import { Plus, Trash2, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TASK_CONFIG } from '@/config/tasks';
 import { buildApiUrl } from '@/lib/api';
+import DashboardWidgets from './DashboardWidgets';
 
 export default function TaskPanel() {
   const { tasks, selectedTaskId, selectTask, refreshTasks } = useTaskContext();
@@ -203,35 +204,54 @@ export default function TaskPanel() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-card border-r overflow-hidden">
+    <div className="h-full flex flex-col bg-zinc-900 border-r border-zinc-800 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold mb-2">Task List</h2>
-        <Button variant="default" size="sm" className="w-full" onClick={() => selectTask(null)} disabled={selectedTaskId === null}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Task
-        </Button>
+      <div className="p-4 border-b border-zinc-800">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <ListTodo className="w-5 h-5 text-sky-500" />
+            <h2 className="text-lg font-semibold text-zinc-100">Tasks</h2>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-sky-500 hover:bg-sky-600 text-white"
+            onClick={() => selectTask(null)}
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            New Task
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
-        <div className="px-4 pt-2">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="active">
+        <div className="px-4 pt-3 pb-2">
+          <TabsList className="grid w-full grid-cols-3 bg-zinc-950/50 border border-zinc-800">
+            <TabsTrigger
+              value="active"
+              className="data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-500 text-zinc-400"
+            >
               Active ({getTasksByTab('active').length})
             </TabsTrigger>
-            <TabsTrigger value="queued">
+            <TabsTrigger
+              value="queued"
+              className="data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-500 text-zinc-400"
+            >
               Queued ({getTasksByTab('queued').length})
             </TabsTrigger>
-            <TabsTrigger value="completed">
-              Done ({getTasksByTab('completed').length})
+            <TabsTrigger
+              value="completed"
+              className="data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-500 text-zinc-400"
+            >
+              Completed ({getTasksByTab('completed').length})
             </TabsTrigger>
           </TabsList>
         </div>
 
         {/* Bulk Actions - Only in Completed Tab */}
         {activeTab === 'completed' && selectedTaskIds.size > 0 && (
-          <div className="px-4 py-2 border-b bg-muted/30">
+          <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-950/30">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={handleSelectAll}>
@@ -254,9 +274,16 @@ export default function TaskPanel() {
           </div>
         )}
 
-        {/* Task List */}
+        {/* Task List Content */}
         <TabsContent value={activeTab} className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
+            {/* Dashboard Widgets - Only in Active Tab */}
+            {activeTab === 'active' && (
+              <div className="pt-2">
+                <DashboardWidgets />
+              </div>
+            )}
+
             <div className="p-2 space-y-1">
               {sortedTasks.length === 0 ? (
                 <div className="p-8 text-center">
@@ -285,12 +312,14 @@ export default function TaskPanel() {
         </TabsContent>
       </Tabs>
 
-      <Separator />
+      <Separator className="bg-zinc-800" />
 
       {/* Footer Stats */}
-      <div className="p-4">
-        <div className="text-xs text-muted-foreground">
-          Total {activeTab}: {tasksForTab.length}
+      <div className="p-3 border-t border-zinc-800">
+        <div className="text-xs text-zinc-400">
+          {activeTab === 'active' && `${tasksForTab.length} active task${tasksForTab.length !== 1 ? 's' : ''}`}
+          {activeTab === 'queued' && `${tasksForTab.length} task${tasksForTab.length !== 1 ? 's' : ''} in queue`}
+          {activeTab === 'completed' && `${tasksForTab.length} completed task${tasksForTab.length !== 1 ? 's' : ''}`}
         </div>
       </div>
     </div>

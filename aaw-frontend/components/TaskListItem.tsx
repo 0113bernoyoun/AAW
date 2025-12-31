@@ -1,10 +1,9 @@
 'use client';
 
 import { Task } from '@/types/task';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Clock, AlertCircle, CheckCircle2, XCircle, Pause, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 interface TaskListItemProps {
   task: Task;
@@ -23,79 +22,76 @@ export default function TaskListItem({
   isChecked,
   onCheckChange
 }: TaskListItemProps) {
-  // Mission Control status icon mapping
-  const getStatusIcon = () => {
+  // Get status color for the left border indicator
+  const getStatusColor = () => {
     switch (task.status) {
-      case 'QUEUED':
-        return <Clock className="w-4 h-4 text-mc-accent-blue" />;
       case 'RUNNING':
-        return <Loader2 className="w-4 h-4 text-mc-accent-green animate-spin" />;
-      case 'CANCELLING':
-        return <XCircle className="w-4 h-4 text-mc-accent-yellow animate-spin" />;
+        return 'bg-emerald-500';
+      case 'QUEUED':
+        return 'bg-sky-500';
       case 'COMPLETED':
-        return <CheckCircle2 className="w-4 h-4 text-mc-accent-green" />;
+        return 'bg-emerald-500';
       case 'FAILED':
-        return <XCircle className="w-4 h-4 text-mc-accent-red" />;
       case 'INTERRUPTED':
-        return <AlertCircle className="w-4 h-4 text-mc-accent-red" />;
-      case 'CANCELLED':
-        return <XCircle className="w-4 h-4 text-mc-text-muted" />;
       case 'KILLED':
-        return <AlertTriangle className="w-4 h-4 text-mc-accent-red" />;
+        return 'bg-red-500';
       case 'PAUSED':
-        return <Pause className="w-4 h-4 text-mc-accent-yellow" />;
       case 'RATE_LIMITED':
-        return <AlertTriangle className="w-4 h-4 text-mc-accent-yellow" />;
+      case 'CANCELLING':
+        return 'bg-amber-500';
       default:
-        return <Clock className="w-4 h-4 text-mc-text-muted" />;
+        return 'bg-zinc-400';
     }
   };
 
-  // Mission Control status badge styling
-  const getStatusBadgeClass = () => {
+  // Format status subtitle
+  const getStatusSubtitle = () => {
+    const timeAgo = formatDistanceToNow(new Date(task.completedAt || task.startedAt || task.createdAt), { addSuffix: true });
+
     switch (task.status) {
-      case 'QUEUED':
-        return 'bg-mc-accent-blue/10 text-mc-accent-blue border-mc-accent-blue';
       case 'RUNNING':
-        return 'bg-mc-accent-green/10 text-mc-accent-green border-mc-accent-green animate-pulse-slow';
-      case 'CANCELLING':
-        return 'bg-mc-accent-yellow/10 text-mc-accent-yellow border-mc-accent-yellow animate-pulse';
+        return `Active: ${timeAgo}`;
+      case 'QUEUED':
+        return `Queued: ${timeAgo}`;
       case 'COMPLETED':
-        return 'bg-mc-accent-green/10 text-mc-accent-green border-mc-accent-green';
+        return `Completed: ${timeAgo}`;
       case 'FAILED':
-        return 'bg-mc-accent-red/10 text-mc-accent-red border-mc-accent-red';
+        return `Failed: ${timeAgo}`;
       case 'INTERRUPTED':
-        return 'bg-mc-accent-red/10 text-mc-accent-red border-mc-accent-red';
+        return `Interrupted: ${timeAgo}`;
       case 'CANCELLED':
-        return 'bg-mc-text-muted/10 text-mc-text-muted border-mc-text-muted';
+        return `Cancelled: ${timeAgo}`;
       case 'KILLED':
-        return 'bg-mc-accent-red/10 text-mc-accent-red border-mc-accent-red';
-      case 'RATE_LIMITED':
-        return 'bg-mc-accent-yellow/10 text-mc-accent-yellow border-mc-accent-yellow';
+        return `Killed: ${timeAgo}`;
       case 'PAUSED':
-        return 'bg-mc-accent-yellow/10 text-mc-accent-yellow border-mc-accent-yellow';
+        return `Paused: ${timeAgo}`;
+      case 'RATE_LIMITED':
+        return `Rate Limited: ${timeAgo}`;
+      case 'CANCELLING':
+        return `Cancelling: ${timeAgo}`;
       default:
-        return 'bg-mc-bg-secondary text-mc-text-muted border-mc-border';
+        return timeAgo;
     }
   };
-
-  // Urgent mode: Priority > 0 gets red border and pulse animation
-  const isUrgent = task.priority > 0;
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left p-3 rounded-lg border-2 transition-all',
-        'hover:bg-mc-bg-secondary hover:border-mc-accent-blue/50',
+        'w-full text-left p-3 rounded-lg transition-all duration-200 relative overflow-hidden',
+        'hover:bg-zinc-800/50 group',
         isSelected
-          ? 'border-mc-accent-blue bg-mc-bg-secondary'
-          : isUrgent
-            ? 'border-mc-accent-red bg-mc-bg-secondary animate-pulse-urgent'
-            : 'border-transparent bg-card'
+          ? 'bg-zinc-800/80'
+          : 'bg-zinc-900/30'
       )}
     >
-      <div className="flex items-start gap-3 w-full">
+      {/* Left color indicator */}
+      <div className={cn(
+        'absolute left-0 top-0 bottom-0 w-1 rounded-l-lg transition-all duration-200',
+        isSelected ? 'bg-sky-500' : getStatusColor()
+      )} />
+
+      <div className="flex items-start gap-3 w-full pl-2">
         {showCheckbox && (
           <Checkbox
             checked={isChecked}
@@ -104,50 +100,15 @@ export default function TaskListItem({
             className="mt-1"
           />
         )}
-        <div className="pt-0.5 flex-shrink-0">
-          {getStatusIcon()}
-        </div>
         <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="flex items-center gap-2 mb-1 min-w-0">
-            <span className="text-xs font-mono text-mc-text-muted flex-shrink-0">#{task.id}</span>
-            <Badge
-              variant="outline"
-              className={cn('text-xs flex-shrink-0', getStatusBadgeClass())}
-              data-testid="task-status-badge"
-            >
-              {task.status}
-            </Badge>
-            {isUrgent && (
-              <Badge
-                variant="outline"
-                className="text-xs flex-shrink-0 bg-mc-accent-purple/10 text-mc-accent-purple border-mc-accent-purple"
-              >
-                URGENT
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm font-medium line-clamp-2 mb-2 break-words text-mc-text-primary">
+          {/* Title */}
+          <p className="text-sm font-medium line-clamp-2 break-words text-zinc-100 mb-1">
             {task.instruction || 'No instruction'}
           </p>
-          <div className="flex items-center gap-2 text-xs text-mc-text-muted flex-wrap">
-            <span className={cn(
-              'font-semibold flex-shrink-0',
-              isUrgent ? 'text-mc-accent-purple' : 'text-mc-accent-blue'
-            )}>
-              P{task.priority}
-            </span>
-            {task.queuePosition !== null && (
-              <span className="flex-shrink-0">Queue: {task.queuePosition}</span>
-            )}
-            {task.retryCount > 0 && (
-              <span className="text-mc-accent-yellow flex-shrink-0">Retry: {task.retryCount}</span>
-            )}
-          </div>
-          {task.failureReason && (
-            <p className="text-xs text-mc-accent-red mt-1 line-clamp-1">
-              {task.failureReason}
-            </p>
-          )}
+          {/* Status subtitle */}
+          <p className="text-xs text-zinc-400">
+            {getStatusSubtitle()}
+          </p>
         </div>
       </div>
     </button>

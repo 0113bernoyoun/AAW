@@ -5,44 +5,25 @@ import Navigation from '@/components/dashboard/Navigation';
 import TaskPanel from '@/components/dashboard/TaskPanel';
 import WorkspacePanel from '@/components/dashboard/WorkspacePanel';
 import RecoveryManager from '@/components/RecoveryManager';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 export default function Home() {
   return (
     <TaskProvider>
-      <div className="h-screen overflow-hidden bg-background">
-        <ResizablePanelGroup orientation="horizontal" id="mission-control-layout">
-          {/* Left Navigation - 15% */}
-          <ResizablePanel
-            defaultSize={15}
-            minSize={10}
-            maxSize={20}
-            id="nav-panel"
-            collapsible={false}
-          >
-            <Navigation />
-          </ResizablePanel>
+      <div className="h-screen flex overflow-hidden bg-zinc-950">
+        {/* Fixed 64px Nav */}
+        <div className="w-16 flex-shrink-0 bg-zinc-950 border-r border-zinc-800">
+          <Navigation />
+        </div>
 
-          <ResizableHandle withHandle />
+        {/* Task Sidebar: Fixed 320px width */}
+        <div className="w-80 flex-shrink-0 overflow-hidden">
+          <TaskPanel />
+        </div>
 
-          {/* Center Task List - 30% */}
-          <ResizablePanel
-            defaultSize={30}
-            minSize={20}
-            maxSize={40}
-            id="task-panel"
-            collapsible={false}
-          >
-            <TaskPanel />
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right Workspace - 55% */}
-          <ResizablePanel defaultSize={55} id="workspace-panel">
-            <WorkspacePanel />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        {/* Workspace: flex-grow fills remaining space */}
+        <div className="flex-1 overflow-hidden">
+          <WorkspacePanel />
+        </div>
 
         {/* Recovery Modal Manager */}
         <RecoveryManager />

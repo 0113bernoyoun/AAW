@@ -27,41 +27,63 @@
   }
 
   .dark {
-    /* Mission Control Dark Theme - Corrected HSL values for #0d1117 and #c9d1d9 */
-    --background: 216 28% 7%;
-    /* #0d1117 - mc-bg-primary */
-    --foreground: 212 12% 82%;
-    /* #c9d1d9 - mc-text-primary */
-    --card: 215 21% 11%;
-    /* #161b22 - mc-bg-secondary */
-    --card-foreground: 212 12% 82%;
-    /* #c9d1d9 */
-    --popover: 215 21% 11%;
-    /* #161b22 */
-    --popover-foreground: 212 12% 82%;
-    --primary: 212 100% 67%;
-    /* #58a6ff - mc-accent-blue */
-    --primary-foreground: 216 28% 7%;
-    --secondary: 213 12% 21%;
-    /* #30363d - mc-border */
-    --secondary-foreground: 212 12% 82%;
-    --muted: 213 12% 21%;
-    --muted-foreground: 213 10% 58%;
-    /* #8b949e - mc-text-muted */
-    --accent: 212 100% 67%;
-    /* #58a6ff */
-    --accent-foreground: 216 28% 7%;
-    --destructive: 3 93% 63%;
-    /* #f85149 - mc-accent-red */
-    --destructive-foreground: 212 12% 82%;
-    --border: 213 12% 21%;
-    /* #30363d */
-    --input: 213 12% 21%;
-    --ring: 212 100% 67%;
+    /* Zinc/Slate Dark Theme */
+    --background: 240 10% 3.9%;
+    /* zinc-950: #09090b */
+    --foreground: 240 4.8% 95.9%;
+    /* zinc-100: #f4f4f5 */
+    --card: 240 5.9% 10%;
+    /* zinc-900: #18181b */
+    --card-foreground: 240 4.8% 95.9%;
+    /* zinc-100 */
+    --popover: 240 5.9% 10%;
+    /* zinc-900 */
+    --popover-foreground: 240 4.8% 95.9%;
+    --primary: 199 89% 48%;
+    /* sky-500: #0ea5e9 */
+    --primary-foreground: 240 10% 3.9%;
+    --secondary: 240 3.7% 15.9%;
+    /* zinc-800: #27272a */
+    --secondary-foreground: 240 4.8% 95.9%;
+    --muted: 240 3.7% 15.9%;
+    /* zinc-800 */
+    --muted-foreground: 240 5% 64.9%;
+    /* zinc-400: #a1a1aa */
+    --accent: 199 89% 48%;
+    /* sky-500 */
+    --accent-foreground: 240 10% 3.9%;
+    --destructive: 0 84.2% 60.2%;
+    /* red-500: #ef4444 */
+    --destructive-foreground: 240 4.8% 95.9%;
+    --border: 240 3.7% 15.9%;
+    /* zinc-800: #27272a */
+    --input: 240 3.7% 15.9%;
+    --ring: 199 89% 48%;
   }
 }
 
 @layer utilities {
+  /* Orange/Amber colors for Danger Mode */
+  .text-orange-500 {
+    color: rgb(249, 115, 22) !important;
+  }
+
+  .text-amber-500 {
+    color: rgb(245, 158, 11) !important;
+  }
+
+  .text-amber-100 {
+    color: rgb(254, 243, 199) !important;
+  }
+
+  .bg-amber-500\/15 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+  }
+
+  .border-amber-500\/40 {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+  }
+
   .animate-pulse-urgent {
     animation: pulse-urgent 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
@@ -71,12 +93,31 @@
     0%,
     100% {
       opacity: 1;
-      border-color: #f85149;
+      border-color: rgba(248, 81, 73, 0.6);
+      /* mc-accent-red with opacity */
     }
 
     50% {
-      opacity: 0.5;
-      border-color: transparent;
+      opacity: 0.7;
+      border-color: rgba(248, 81, 73, 0.2);
+    }
+  }
+
+  /* Custom utility for smooth fade ins */
+  .fade-in {
+    opacity: 0;
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 }
@@ -86,8 +127,17 @@
     border-color: hsl(var(--border));
   }
 
+  html,
   body {
-    background-color: hsl(var(--background));
+    overflow-x: hidden;
+  }
+
+  body {
+    /* Zinc Dark Theme Background */
+    background: radial-gradient(circle at 50% 10%,
+        #18181b 0%,
+        #09090b 80%);
+    background-attachment: fixed;
     color: hsl(var(--foreground));
   }
 }

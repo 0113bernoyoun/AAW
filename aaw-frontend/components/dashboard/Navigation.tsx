@@ -1,33 +1,43 @@
 'use client';
 
-import { ListTodo } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ListTodo, Settings, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export default function Navigation() {
+  const { theme, setTheme } = useTheme();
+
   return (
-    <div className="h-full flex flex-col bg-card border-r">
-      {/* Header */}
-      <div className="p-4 border-b">
-        <h1 className="text-lg font-bold">AAW</h1>
-        <p className="text-xs text-muted-foreground">Mission Control</p>
+    <div className="h-full flex flex-col bg-zinc-950 items-center py-4">
+      {/* Logo Icon */}
+      <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center mb-6">
+        <ListTodo className="w-5 h-5 text-sky-500" />
       </div>
 
-      {/* Menu Items */}
-      <div className="flex-1 p-2 space-y-1">
-        <Button variant="default" className="w-full justify-start">
-          <ListTodo className="w-4 h-4 mr-2" />
-          Tasks
-        </Button>
+      {/* Icon Menu */}
+      <div className="flex-1 flex flex-col items-center gap-2">
+        <button
+          className="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 border border-sky-500/20 flex items-center justify-center transition-colors"
+          title="Tasks"
+        >
+          <ListTodo className="w-5 h-5" />
+        </button>
       </div>
 
-      <Separator />
-
-      {/* Footer */}
-      <div className="p-4 space-y-2">
-        <ThemeToggle />
-        <p className="text-xs text-muted-foreground text-center">v2.0</p>
+      {/* Footer Icons */}
+      <div className="flex flex-col items-center gap-2">
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="w-10 h-10 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 flex items-center justify-center transition-colors"
+          title="Toggle Theme"
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+        <button
+          className="w-10 h-10 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 flex items-center justify-center transition-colors"
+          title="Settings"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

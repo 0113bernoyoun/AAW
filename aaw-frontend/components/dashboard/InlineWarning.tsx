@@ -16,21 +16,21 @@ interface InlineWarningProps {
 const severityConfig = {
   info: {
     icon: Info,
-    bgClass: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800',
-    iconClass: 'text-blue-600 dark:text-blue-400',
-    textClass: 'text-blue-900 dark:text-blue-100',
+    bgClass: 'bg-mc-accent-blue/10 border-mc-accent-blue/30',
+    iconClass: 'text-mc-accent-blue',
+    textClass: 'text-mc-accent-blue',
   },
   warning: {
-    icon: AlertCircle,
-    bgClass: 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800',
-    iconClass: 'text-yellow-600 dark:text-yellow-400',
-    textClass: 'text-yellow-900 dark:text-yellow-100',
+    icon: AlertTriangle,
+    bgClass: 'bg-amber-500/15 border-amber-500/40',
+    iconClass: 'text-amber-500',
+    textClass: 'text-amber-100',
   },
   danger: {
     icon: AlertTriangle,
-    bgClass: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
-    iconClass: 'text-red-600 dark:text-red-400',
-    textClass: 'text-red-900 dark:text-red-100',
+    bgClass: 'bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/40',
+    iconClass: 'text-orange-500',
+    textClass: 'text-orange-100',
   },
 };
 
@@ -60,7 +60,7 @@ export default function InlineWarning({
           <h4 className={cn('font-semibold text-sm mb-1', config.textClass)}>
             {title}
           </h4>
-          <p className={cn('text-xs', config.textClass)}>{description}</p>
+          <p className={cn('text-xs opacity-80', config.textClass)}>{description}</p>
         </div>
       </div>
     </div>
