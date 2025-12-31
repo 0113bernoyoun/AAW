@@ -46,6 +46,7 @@ class RunnerWebSocketHandler(
                 "RUNNER_CAPACITY" -> handleRunnerCapacity(jsonNode)
                 "TASK_COMPLETED" -> handleTaskCompleted(jsonNode)
                 "CANCEL_ACK" -> handleCancelAck(jsonNode)
+                "TASK_TERMINATED" -> handleTaskTerminated(jsonNode)
                 else -> logger.warn("Unknown message type: {}", type)
             }
         } catch (e: Exception) {
@@ -203,6 +204,28 @@ class RunnerWebSocketHandler(
 
             // ✅ FIX: Still trigger next dispatch even on failure
             taskDispatcherService?.onTaskCompleted(taskId, success = false, error = error ?: "Cancellation failed")
+        }
+    }
+
+    /**
+     * Phase 2.2: Handle TASK_TERMINATED ACK from Runner.
+     * Signals completion of process termination for safe deletion protocol.
+     * Backend waits for this ACK before soft-deleting task record to prevent zombie processes.
+     */
+    private fun handleTaskTerminated(jsonNode: JsonNode) {
+        val taskId = jsonNode.get("taskId")?.asLong() ?: return
+        val success = jsonNode.get("success")?.asBoolean() ?: false
+        val error = jsonNode.get("error")?.asText()
+
+        logger.info("Received TASK_TERMINATED ACK for task {}: success={}, error={}",
+            taskId, success, error)
+
+        // Notify TaskService that termination ACK was received
+        // This unblocks the safeDeleteTask() coroutine waiting for ACK
+        taskService.handleTaskTerminatedAck(taskId)
+
+        if (!success) {
+            logger.warn("Task {} termination reported failure: {}", taskId, error)
         }
     }
 

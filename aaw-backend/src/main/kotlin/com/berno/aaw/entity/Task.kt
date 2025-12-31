@@ -66,7 +66,14 @@ data class Task(
     var retryCount: Int = 0,
 
     @Column(name = "cancelled_at")
-    var cancelledAt: LocalDateTime? = null
+    var cancelledAt: LocalDateTime? = null,
+
+    // Soft delete fields for 24-hour retention policy
+    @Column(name = "is_archived", nullable = false)
+    var isArchived: Boolean = false,
+
+    @Column(name = "deleted_at")
+    var deletedAt: LocalDateTime? = null
 )
 
 enum class TaskStatus {
@@ -79,8 +86,9 @@ enum class TaskStatus {
     FAILED,
     PAUSED_BY_LIMIT,
     INTERRUPTED,
-    CANCELLED,
     CANCELLING,  // SIGTERM sent, waiting for graceful shutdown
+    TERMINATING, // KILL_TASK sent, waiting for runner ACK before soft delete
+    CANCELLED,
     KILLED       // Force killed with SIGKILL
 }
 

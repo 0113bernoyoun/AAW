@@ -13,10 +13,16 @@ func main() {
 	log.Println("Starting AAW Runner...")
 
 	// WebSocket server URL
-	serverURL := os.Getenv("AAW_SERVER_URL")
+	// Try AAW_BACKEND_URL first (new standard), fallback to AAW_SERVER_URL (legacy)
+	serverURL := os.Getenv("AAW_BACKEND_URL")
+	if serverURL == "" {
+		serverURL = os.Getenv("AAW_SERVER_URL")
+	}
 	if serverURL == "" {
 		serverURL = "ws://localhost:8080/ws/logs"
 	}
+
+	log.Printf("Connecting to backend at: %s", serverURL)
 
 	// Create and connect WebSocket client
 	client := websocket.NewClient(serverURL)

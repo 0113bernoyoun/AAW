@@ -1,6 +1,6 @@
 # Multi-Stage Dockerfile for AAW Backend (Spring Boot/Kotlin)
 # Stage 1: Build the application using Gradle
-FROM --platform=linux/amd64 gradle:8.5-jdk17-alpine AS builder
+FROM --platform=linux/amd64 gradle:8.5-jdk21-alpine AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY src ./src
 RUN gradle bootJar --no-daemon
 
 # Stage 2: Runtime image with JRE only
-FROM --platform=linux/amd64 eclipse-temurin:17-jre-alpine
+FROM --platform=linux/amd64 eclipse-temurin:21-jre-alpine
 
 # Create non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring

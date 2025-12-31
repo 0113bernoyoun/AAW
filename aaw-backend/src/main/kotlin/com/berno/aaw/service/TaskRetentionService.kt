@@ -14,11 +14,12 @@ import java.time.LocalDateTime
  * Runs hourly to archive (soft delete) tasks in terminal states that completed more than 24 hours ago.
  * Terminal states: COMPLETED, FAILED, CANCELLED, INTERRUPTED
  *
- * Tasks are marked as CANCELLED status while preserving completed_at timestamp.
+ * Tasks are marked with is_archived=true and deleted_at timestamp (soft delete).
+ * Archived tasks can be permanently deleted via "Empty Trash" endpoint.
  * Broadcasts TASK_ARCHIVED SSE event for real-time frontend updates (no toast notification).
  *
  * @author Claude (AAW Implementation)
- * @since 2025-12-26
+ * @since 2025-12-30
  */
 @Service
 class TaskRetentionService(
@@ -62,17 +63,18 @@ class TaskRetentionService(
         var archivedCount = 0
         expiredTasks.forEach { task ->
             try {
-                // Soft delete: mark as CANCELLED if not already
-                if (task.status != TaskStatus.CANCELLED) {
-                    task.status = TaskStatus.CANCELLED
+                // Soft delete: mark as archived with timestamp
+                if (!task.isArchived) {
+                    task.isArchived = true
+                    task.deletedAt = LocalDateTime.now()
                     taskRepository.save(task)
+
+                    // Broadcast archival event (silent - no toast)
+                    broadcastArchival(task.id)
+                    archivedCount++
+
+                    logger.debug("Archived task [${task.id}]: ${task.instruction}")
                 }
-
-                // Broadcast archival event (silent - no toast)
-                broadcastArchival(task.id)
-                archivedCount++
-
-                logger.debug("Archived task [${task.id}]: ${task.instruction}")
             } catch (e: Exception) {
                 logger.error("Failed to archive task [${task.id}]", e)
             }

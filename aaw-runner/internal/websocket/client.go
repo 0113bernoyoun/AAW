@@ -291,7 +291,12 @@ func (c *Client) handleKillTask(msg models.KillTaskMessage) {
 	log.Printf("[WS] Received KILL_TASK for task %d", msg.TaskID)
 
 	err := c.pool.ForceKillTask(msg.TaskID)
+
+	// Send legacy CANCEL_ACK for backward compatibility
 	c.sendCancelAck(msg.TaskID, "KILLED", err == nil, errorToString(err))
+
+	// Send new TASK_TERMINATED ACK for safe deletion protocol
+	c.sendTaskTerminated(msg.TaskID, err == nil, errorToString(err))
 
 	// Send status update if kill was successful
 	if err == nil {
@@ -316,6 +321,23 @@ func (c *Client) sendCancelAck(taskID int64, status string, success bool, errMsg
 	log.Printf("[WS] Sending CANCEL_ACK: task=%d, status=%s, success=%v", taskID, status, success)
 	if err := c.sendJSON(ack); err != nil {
 		log.Printf("Failed to send cancel ack: %v", err)
+	}
+}
+
+// sendTaskTerminated sends TASK_TERMINATED acknowledgment for safe deletion protocol
+// Backend waits for this ACK before soft-deleting the task record
+func (c *Client) sendTaskTerminated(taskID int64, success bool, errMsg string) {
+	ack := models.TaskTerminatedMessage{
+		Type:    models.TypeTaskTerminated,
+		TaskID:  taskID,
+		Status:  "KILLED",
+		Success: success,
+		Error:   errMsg,
+	}
+
+	log.Printf("[WS] Sending TASK_TERMINATED ACK: task=%d, success=%v", taskID, success)
+	if err := c.sendJSON(ack); err != nil {
+		log.Printf("Failed to send task terminated ack: %v", err)
 	}
 }
 

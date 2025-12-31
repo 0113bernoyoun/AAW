@@ -1,8 +1,9 @@
 'use client';
 
 import { TaskProvider } from '@/contexts/TaskContext';
-import TaskSidebar from '@/components/TaskSidebar';
-import TaskWorkspace from '@/components/TaskWorkspace';
+import Navigation from '@/components/dashboard/Navigation';
+import TaskPanel from '@/components/dashboard/TaskPanel';
+import WorkspacePanel from '@/components/dashboard/WorkspacePanel';
 import RecoveryManager from '@/components/RecoveryManager';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
@@ -11,21 +12,35 @@ export default function Home() {
     <TaskProvider>
       <div className="h-screen overflow-hidden bg-background">
         <ResizablePanelGroup orientation="horizontal" id="mission-control-layout">
-          {/* Left Sidebar - Mission Control Task Monitor (30%) */}
+          {/* Left Navigation - 15% */}
           <ResizablePanel
-            defaultSize={30}
-            id="sidebar-panel"
+            defaultSize={15}
+            minSize={10}
+            maxSize={20}
+            id="nav-panel"
             collapsible={false}
           >
-            <TaskSidebar />
+            <Navigation />
           </ResizablePanel>
 
-          {/* Drag Handle */}
           <ResizableHandle withHandle />
 
-          {/* Right Workspace - Terminal & Control Panel (70%) */}
-          <ResizablePanel defaultSize={70} id="workspace-panel">
-            <TaskWorkspace />
+          {/* Center Task List - 30% */}
+          <ResizablePanel
+            defaultSize={30}
+            minSize={20}
+            maxSize={40}
+            id="task-panel"
+            collapsible={false}
+          >
+            <TaskPanel />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Workspace - 55% */}
+          <ResizablePanel defaultSize={55} id="workspace-panel">
+            <WorkspacePanel />
           </ResizablePanel>
         </ResizablePanelGroup>
 

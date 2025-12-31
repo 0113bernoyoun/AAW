@@ -12,6 +12,7 @@ import TaskExecutionModeSelector from './task-creation/TaskExecutionModeSelector
 import TaskPriorityControl from './task-creation/TaskPriorityControl';
 import BulkTaskCreator from './task-creation/BulkTaskCreator';
 import UrgentModeDialog from './UrgentModeDialog';
+import InlineWarning from './dashboard/InlineWarning';
 import { AlertTriangle } from 'lucide-react';
 
 interface TaskControlPanelProps {
@@ -208,15 +209,12 @@ export default function TaskControlPanel({
               </div>
 
               {/* Danger Warning */}
-              {skipPermissions && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="w-4 h-4" />
-                  <AlertDescription className="text-xs">
-                    <strong>Warning:</strong> Skip Permissions allows Claude to execute commands, modify files,
-                    and make system-level changes without confirmation. Only use for trusted scripts.
-                  </AlertDescription>
-                </Alert>
-              )}
+              <InlineWarning
+                severity="danger"
+                title="Danger Mode Active"
+                description="Skip Permissions allows Claude to execute commands, modify files, and make system-level changes without confirmation. Only use for trusted scripts."
+                visible={skipPermissions}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

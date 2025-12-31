@@ -10,6 +10,7 @@ export type TaskStatus =
   | 'INTERRUPTED'
   | 'CANCELLED'
   | 'CANCELLING'
+  | 'TERMINATING'
   | 'KILLED';
 
 export interface RecoveryAttempt {
@@ -36,6 +37,8 @@ export interface Task {
   createdAt: string;
   startedAt: string | null;
   completedAt: string | null;
+  isArchived: boolean;
+  deletedAt: string | null;
   recoveryHistory?: RecoveryAttempt[];
 }
 

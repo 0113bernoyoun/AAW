@@ -44,6 +44,7 @@ RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 # Copy standalone output from builder
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Switch to non-root user
 USER nextjs

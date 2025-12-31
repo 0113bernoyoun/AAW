@@ -22,4 +22,12 @@ interface TaskRepository : JpaRepository<Task, Long> {
         statuses: List<TaskStatus>,
         cutoff: java.time.LocalDateTime
     ): List<Task>
+
+    /**
+     * Find all archived tasks (soft deleted).
+     * Used for "Empty Trash" functionality to permanently delete archived tasks.
+     *
+     * @return List of all archived tasks
+     */
+    fun findByIsArchived(isArchived: Boolean): List<Task>
 }

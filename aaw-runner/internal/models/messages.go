@@ -2,16 +2,17 @@ package models
 
 // Message types
 const (
-	TypeHelo           = "HELO"
-	TypeLog            = "LOG"
-	TypeStatusUpdate   = "STATUS_UPDATE"
-	TypeExecute        = "EXECUTE"
-	TypeRunnerStatus   = "RUNNER_STATUS"
-	TypeTaskCompleted  = "TASK_COMPLETED"
-	TypeCancelTask     = "CANCEL_TASK"
-	TypeKillTask       = "KILL_TASK"
-	TypeCancelAck      = "CANCEL_ACK"
-	TypeRunnerCapacity = "RUNNER_CAPACITY"
+	TypeHelo            = "HELO"
+	TypeLog             = "LOG"
+	TypeStatusUpdate    = "STATUS_UPDATE"
+	TypeExecute         = "EXECUTE"
+	TypeRunnerStatus    = "RUNNER_STATUS"
+	TypeTaskCompleted   = "TASK_COMPLETED"
+	TypeCancelTask      = "CANCEL_TASK"
+	TypeKillTask        = "KILL_TASK"
+	TypeCancelAck       = "CANCEL_ACK"
+	TypeTaskTerminated  = "TASK_TERMINATED" // New: Explicit ACK for delete operation
+	TypeRunnerCapacity  = "RUNNER_CAPACITY"
 )
 
 // HeloMessage represents the initial handshake message
@@ -88,6 +89,16 @@ type CancelAckMessage struct {
 	Type    string `json:"type"`
 	TaskID  int64  `json:"taskId"`
 	Status  string `json:"status"`          // "CANCELLED" or "KILLED"
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
+// TaskTerminatedMessage represents explicit ACK after task termination for safe deletion
+// Used by backend to wait for confirmation before soft-deleting task record
+type TaskTerminatedMessage struct {
+	Type    string `json:"type"`
+	TaskID  int64  `json:"taskId"`
+	Status  string `json:"status"`          // "KILLED"
 	Success bool   `json:"success"`
 	Error   string `json:"error,omitempty"`
 }

@@ -338,52 +338,81 @@ class TaskController(
     }
 
     /**
-     * Manual deletion endpoint - permanently removes task with hard delete.
-     * Bypasses 24-hour retention rule.
-     * Terminates running tasks before deletion if Runner available.
+     * Phase 2.2: Safe deletion endpoint with runner ACK protocol.
+     * Soft-deletes task (is_archived=true) after confirming process termination.
+     * Prevents zombie processes through TASK_TERMINATED ACK waiting.
+     *
+     * Flow:
+     * - RUNNING/INTERRUPTED tasks: KILL_TASK → Wait for ACK → Soft delete
+     * - QUEUED tasks: Remove from Redis queue → Soft delete
+     * - Terminal states: Soft delete immediately
      *
      * @param id Task ID to delete
      * @return ResponseEntity with deletion status
      */
     @DeleteMapping("/{id}")
-    fun deleteTask(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+    suspend fun deleteTask(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
         val task = taskRepository.findById(id).orElse(null)
             ?: return ResponseEntity.notFound().build()
 
-        logger.info("Manual deletion requested for task [{}] (status: {})", task.id, task.status)
+        logger.info("Safe deletion requested for task [{}] (status: {})", task.id, task.status)
 
-        // If task is running or interrupted, attempt termination
-        if (task.status in listOf(TaskStatus.RUNNING, TaskStatus.INTERRUPTED)) {
-            logger.info("Task [{}] is active, attempting termination", task.id)
-
-            try {
-                taskService.sendCancelToRunner(task.id, force = false)
-                // Wait briefly for termination acknowledgment
-                Thread.sleep(2000)
-                logger.info("Termination signal sent for task [{}]", task.id)
-            } catch (e: Exception) {
-                logger.warn("Failed to terminate task [{}] gracefully: {}", task.id, e.message)
-                // Continue with deletion - Runner will clean up on next sync
-            }
-        }
-
-        // Hard delete from database
-        try {
-            taskRepository.delete(task)
-            logger.info("Task [{}] permanently deleted", task.id)
+        return try {
+            // Use safe delete with ACK protocol
+            taskService.safeDeleteTask(id)
 
             // Broadcast deletion event (triggers toast notification)
             broadcastTaskDeletion(task.id)
 
-            return ResponseEntity.ok(mapOf(
-                "status" to "deleted",
+            ResponseEntity.ok(mapOf(
+                "status" to "archived",
                 "taskId" to task.id,
-                "reason" to "manual"
+                "reason" to "manual",
+                "message" to "Task soft-deleted successfully"
             ))
         } catch (e: Exception) {
             logger.error("Failed to delete task [{}]", task.id, e)
-            return ResponseEntity.status(500).body(mapOf(
+            ResponseEntity.status(500).body(mapOf(
                 "error" to "Deletion failed",
+                "message" to (e.message ?: "Unknown error")
+            ))
+        }
+    }
+
+    /**
+     * Empty Trash endpoint - permanently deletes all archived tasks.
+     * Equivalent to Windows Recycle Bin "Empty Trash" functionality.
+     * This is the second step after 24-hour soft delete retention.
+     *
+     * @return ResponseEntity with deletion count
+     */
+    @DeleteMapping("/empty-trash")
+    fun emptyTrash(): ResponseEntity<Map<String, Any>> {
+        logger.info("Empty trash requested - permanently deleting archived tasks")
+
+        val archivedTasks = taskRepository.findByIsArchived(true)
+
+        if (archivedTasks.isEmpty()) {
+            logger.info("No archived tasks found in trash")
+            return ResponseEntity.ok(mapOf(
+                "deletedCount" to 0,
+                "message" to "Trash is already empty"
+            ))
+        }
+
+        try {
+            val count = archivedTasks.size
+            taskRepository.deleteAll(archivedTasks)
+            logger.info("Permanently deleted {} archived tasks from trash", count)
+
+            return ResponseEntity.ok(mapOf(
+                "deletedCount" to count,
+                "message" to "Trash emptied successfully"
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to empty trash", e)
+            return ResponseEntity.status(500).body(mapOf(
+                "error" to "Failed to empty trash",
                 "message" to (e.message ?: "Unknown error")
             ))
         }

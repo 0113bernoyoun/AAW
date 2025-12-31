@@ -19,6 +19,8 @@ import org.springframework.web.socket.WebSocketSession
 import reactor.core.publisher.Sinks
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 
 @Service
 class TaskService(
@@ -330,5 +332,98 @@ class TaskService(
      */
     fun getQueuedTaskCount(): Int {
         return taskRepository.findByStatus(TaskStatus.QUEUED).size
+    }
+
+    // Phase 2.2: Task termination ACK channels for safe deletion
+    private val terminationAckChannels = ConcurrentHashMap<Long, Channel<Unit>>()
+
+    /**
+     * Phase 2.2: Safe delete task with runner ACK protocol.
+     * Prevents zombie processes by waiting for runner to confirm termination.
+     *
+     * Flow:
+     * 1. RUNNING tasks → Send KILL_TASK → Wait for ACK (30s timeout) → Soft delete
+     * 2. QUEUED tasks → Remove from Redis queue → Soft delete
+     * 3. Terminal states → Soft delete immediately
+     *
+     * @param id Task ID to delete
+     */
+    suspend fun safeDeleteTask(id: Long) = withContext(Dispatchers.IO) {
+        val task = taskRepository.findById(id).orElseThrow {
+            IllegalArgumentException("Task not found: $id")
+        }
+
+        logger.info("Safe delete requested for task [{}] (status: {})", id, task.status)
+
+        when (task.status) {
+            TaskStatus.RUNNING, TaskStatus.INTERRUPTED -> {
+                // Send KILL_TASK signal
+                logger.info("Task [{}] is running/interrupted, sending KILL_TASK signal", id)
+                sendCancelToRunner(id, force = true)
+
+                // Update to TERMINATING status
+                task.status = TaskStatus.TERMINATING
+                taskRepository.save(task)
+
+                // Wait for ACK with 30s timeout
+                try {
+                    withTimeout(30_000) {
+                        awaitTerminationAck(id)
+                    }
+                    logger.info("Received TASK_TERMINATED ACK for task [{}]", id)
+                } catch (e: TimeoutCancellationException) {
+                    logger.warn("Timeout waiting for TASK_TERMINATED ACK for task [{}], soft-deleting anyway", id)
+                }
+
+                // Soft delete
+                task.isArchived = true
+                task.deletedAt = LocalDateTime.now()
+                taskRepository.save(task)
+                logger.info("Task [{}] soft-deleted after termination", id)
+            }
+
+            TaskStatus.QUEUED -> {
+                // Remove from Redis queue
+                logger.info("Task [{}] is queued, removing from Redis queue", id)
+                redisQueueService.remove(id)
+
+                // Soft delete
+                task.isArchived = true
+                task.deletedAt = LocalDateTime.now()
+                taskRepository.save(task)
+                logger.info("Task [{}] soft-deleted from queue", id)
+            }
+
+            else -> {
+                // Terminal states - soft delete immediately
+                logger.info("Task [{}] in terminal state, soft-deleting immediately", id)
+                task.isArchived = true
+                task.deletedAt = LocalDateTime.now()
+                taskRepository.save(task)
+            }
+        }
+    }
+
+    /**
+     * Phase 2.2: Wait for task termination ACK from runner.
+     * Creates a channel and suspends until ACK is received.
+     */
+    private suspend fun awaitTerminationAck(taskId: Long) {
+        val channel = Channel<Unit>()
+        terminationAckChannels[taskId] = channel
+        try {
+            channel.receive()
+        } finally {
+            terminationAckChannels.remove(taskId)
+        }
+    }
+
+    /**
+     * Phase 2.2: Handle TASK_TERMINATED ACK from runner.
+     * Called by WebSocket handler when runner confirms termination.
+     */
+    fun handleTaskTerminatedAck(taskId: Long) {
+        logger.info("Received TASK_TERMINATED ACK for task [{}]", taskId)
+        terminationAckChannels[taskId]?.trySend(Unit)
     }
 }
