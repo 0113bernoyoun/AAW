@@ -341,12 +341,24 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     },
     onStatusUpdate: (status: string, taskId?: number) => {
       // Update the status of the specified task or currently running task
+      // Also set completedAt for terminal statuses to enable proper filtering
+      const isTerminalStatus = ['COMPLETED', 'FAILED', 'KILLED', 'CANCELLED'].includes(status);
+      const completedAt = isTerminalStatus ? new Date().toISOString() : undefined;
+
       setTasks(prev => prev.map(task => {
         if (taskId && task.id === taskId) {
-          return { ...task, status: status as TaskStatus };
+          return {
+            ...task,
+            status: status as TaskStatus,
+            ...(completedAt && { completedAt }),
+          };
         }
         if (!taskId && task.status === 'RUNNING') {
-          return { ...task, status: status as TaskStatus };
+          return {
+            ...task,
+            status: status as TaskStatus,
+            ...(completedAt && { completedAt }),
+          };
         }
         return task;
       }));

@@ -3,7 +3,8 @@
 export const TASK_CONFIG = {
   // Hide completed/failed tasks older than this (in minutes)
   // Set to 0 to show all tasks, or increase to hide older tasks
-  HIDE_COMPLETED_AFTER_MINUTES: 30,
+  // 1440 = 24 hours (matches backend retention policy)
+  HIDE_COMPLETED_AFTER_MINUTES: 1440,
 
   // Statuses to filter when old (beyond the time threshold)
   FILTERABLE_STATUSES: ['COMPLETED', 'FAILED', 'INTERRUPTED', 'PENDING'] as const,

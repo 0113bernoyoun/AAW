@@ -38,6 +38,38 @@ class RunnerController(
     }
 
     /**
+     * Clear rate limit status and resume dispatcher.
+     * Use this when rate limit was triggered by false positive detection.
+     */
+    @PostMapping("/clear-rate-limit")
+    fun clearRateLimit(): ResponseEntity<Map<String, Any>> {
+        logger.info("Received request to clear rate limit")
+
+        val dispatcher = taskService.getTaskDispatcherService()
+
+        if (dispatcher == null) {
+            return ResponseEntity.badRequest().body(mapOf(
+                "success" to false,
+                "message" to "Dispatcher not available"
+            ))
+        }
+
+        val wasRateLimited = dispatcher.isRateLimited()
+        dispatcher.setRateLimited(false)
+
+        logger.info("Rate limit cleared (was limited: {})", wasRateLimited)
+
+        // Trigger dispatch to process any queued tasks
+        dispatcher.triggerDispatch()
+
+        return ResponseEntity.ok(mapOf(
+            "success" to true,
+            "wasRateLimited" to wasRateLimited,
+            "message" to "Rate limit cleared and dispatcher resumed"
+        ))
+    }
+
+    /**
      * Phase 4: Get comprehensive system state for frontend re-attachment.
      * Returns runner connection status, running tasks, and queue info.
      */
