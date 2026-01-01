@@ -155,7 +155,7 @@ export default function TaskControlPanel({
         <Button
           onClick={handleSubmit}
           disabled={isStarting || !isSystemReady || !scriptContent.trim()}
-          className="w-full bg-mc-accent-blue hover:bg-mc-accent-blue/90 text-white"
+          className="w-full bg-teal-500 hover:bg-teal-600 text-white"
         >
           <PlayCircle className="w-4 h-4 mr-2" />
           {isStarting ? 'Starting...' : 'Start Task'}

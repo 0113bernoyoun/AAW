@@ -209,13 +209,13 @@ export default function TaskPanel() {
       <div className="p-4 border-b border-zinc-800">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <ListTodo className="w-5 h-5 text-sky-500" />
+            <ListTodo className="w-5 h-5 text-teal-500" />
             <h2 className="text-lg font-semibold text-zinc-100">Tasks</h2>
           </div>
           <Button
             variant="default"
             size="sm"
-            className="bg-sky-500 hover:bg-sky-600 text-white"
+            className="bg-teal-500 hover:bg-teal-600 text-white"
             onClick={() => selectTask(null)}
           >
             <Plus className="w-4 h-4 mr-1" />
@@ -230,19 +230,19 @@ export default function TaskPanel() {
           <TabsList className="grid w-full grid-cols-3 bg-zinc-950/50 border border-zinc-800">
             <TabsTrigger
               value="active"
-              className="data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-500 text-zinc-400"
+              className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-500 text-zinc-400"
             >
               Active ({getTasksByTab('active').length})
             </TabsTrigger>
             <TabsTrigger
               value="queued"
-              className="data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-500 text-zinc-400"
+              className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-500 text-zinc-400"
             >
               Queued ({getTasksByTab('queued').length})
             </TabsTrigger>
             <TabsTrigger
               value="completed"
-              className="data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-500 text-zinc-400"
+              className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-500 text-zinc-400"
             >
               Completed ({getTasksByTab('completed').length})
             </TabsTrigger>

@@ -1,6 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Border Radius */
+  --radius: 0.5rem;
+
+  /* Mission Control Design System Palette */
+  --color-mc-bg-primary: #0d1117;
+  --color-mc-bg-secondary: #161b22;
+  --color-mc-border: #30363d;
+  --color-mc-text-primary: #c9d1d9;
+  --color-mc-text-muted: #8b949e;
+  --color-mc-accent-blue: #58a6ff;
+  --color-mc-accent-green: #3fb950;
+  --color-mc-accent-yellow: #d29922;
+  --color-mc-accent-red: #f85149;
+  --color-mc-accent-purple: #bc8cff;
+}
 
 @layer base {
   :root {
@@ -39,8 +55,8 @@
     --popover: 240 5.9% 10%;
     /* zinc-900 */
     --popover-foreground: 240 4.8% 95.9%;
-    --primary: 199 89% 48%;
-    /* sky-500: #0ea5e9 */
+    --primary: 174 72% 40%;
+    /* teal-500: #14b8a6 */
     --primary-foreground: 240 10% 3.9%;
     --secondary: 240 3.7% 15.9%;
     /* zinc-800: #27272a */
@@ -49,8 +65,8 @@
     /* zinc-800 */
     --muted-foreground: 240 5% 64.9%;
     /* zinc-400: #a1a1aa */
-    --accent: 199 89% 48%;
-    /* sky-500 */
+    --accent: 174 72% 40%;
+    /* teal-500 */
     --accent-foreground: 240 10% 3.9%;
     --destructive: 0 84.2% 60.2%;
     /* red-500: #ef4444 */
@@ -58,7 +74,7 @@
     --border: 240 3.7% 15.9%;
     /* zinc-800: #27272a */
     --input: 240 3.7% 15.9%;
-    --ring: 199 89% 48%;
+    --ring: 174 72% 40%;
   }
 }
 

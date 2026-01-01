@@ -67,7 +67,7 @@ export default function DashboardWidgets() {
             <WidgetCard
                 title="Task Summary"
                 icon={Activity}
-                colorClass="bg-sky-500"
+                colorClass="bg-teal-500"
                 stats={[
                     { label: 'Active', value: lastActiveTime },
                     { label: 'Completed', value: String(completedTasks.length) },

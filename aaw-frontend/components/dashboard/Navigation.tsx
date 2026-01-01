@@ -9,14 +9,14 @@ export default function Navigation() {
   return (
     <div className="h-full flex flex-col bg-zinc-950 items-center py-4">
       {/* Logo Icon */}
-      <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center mb-6">
-        <ListTodo className="w-5 h-5 text-sky-500" />
+      <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center mb-6">
+        <ListTodo className="w-5 h-5 text-teal-500" />
       </div>
 
       {/* Icon Menu */}
       <div className="flex-1 flex flex-col items-center gap-2">
         <button
-          className="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 border border-sky-500/20 flex items-center justify-center transition-colors"
+          className="w-10 h-10 rounded-lg bg-teal-500/10 text-teal-500 hover:bg-teal-500/20 border border-teal-500/20 flex items-center justify-center transition-colors"
           title="Tasks"
         >
           <ListTodo className="w-5 h-5" />
